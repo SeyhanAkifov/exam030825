@@ -59,30 +59,41 @@ export class ExamStack extends cdk.Stack {
 
     const sisiapiressourse = sisiapi.root.addResource("sisiservices");
 
- const notifyAfterDeleteFunction = new NodejsFunction(this, 'NotifierFunction', {
+    const notifyAfterDeleteFunction = new NodejsFunction(this, 'NotifierFunction', {
       entry: path.join(__dirname, "../src/notifyAfterDelete.ts"),
       handler: "handler",
       runtime: Runtime.NODEJS_20_X,
       environment: {
         DYNAMO_TABLE_NAME: dynamoTable.tableName,
         TOPIC_ARN: topic.topicArn,
-      
+
       },
     });
     dynamoTable.grantReadWriteData(notifyAfterDeleteFunction);
     topic.grantPublish(notifyAfterDeleteFunction);
 
-    const sisiApiFunction = new NodejsFunction(this, "GetTableFunction", {
+    
+    const schedulerInvokeRole = new iam.Role(this, 'SchedulerInvokeRole', {
+      assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
+    });
+
+    
+    notifyAfterDeleteFunction.grantInvoke(schedulerInvokeRole);
+
+
+
+    const sisiApiFunction = new NodejsFunction(this, "PostTableFunction", {
       entry: path.join(__dirname, "../src/postObject.ts"),
       handler: "handler",
       runtime: Runtime.NODEJS_20_X,
       environment: {
         DYNAMO_TABLE_NAME: dynamoTable.tableName,
         TOPIC_ARN: topic.topicArn,
-        DELETE_LAMBDA_ARN: notifyAfterDeleteFunction.functionArn
+        DELETE_LAMBDA_ARN: notifyAfterDeleteFunction.functionArn,
+        SCHEDULER_ROLE: schedulerInvokeRole.roleArn
       },
     });
-
+    sisiApiFunction.grantInvoke(schedulerInvokeRole);
     const sisiapipost = sisiapiressourse.addMethod(
       "POST",
       new LambdaIntegration(sisiApiFunction, { proxy: true })
@@ -93,7 +104,7 @@ export class ExamStack extends cdk.Stack {
     topic.grantPublish(sisiApiFunction);
 
 
-   
+
 
 
 
