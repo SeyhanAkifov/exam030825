@@ -1,0 +1,26 @@
+name: deploy CDK Project
+
+on:
+  push:
+    branches:
+      - main
+  
+jobs:
+  synth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+    
+      - name: Synthesize CDK app
+        run: cdk synth
+  

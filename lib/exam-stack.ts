@@ -57,7 +57,20 @@ export class ExamStack extends cdk.Stack {
       description: "This service serves sisi orders.",
     });
 
-    const sisiapiressourse = sisiapi.root.addResource("sisiservices"); 
+    const sisiapiressourse = sisiapi.root.addResource("sisiservices");
+
+ const notifyAfterDeleteFunction = new NodejsFunction(this, 'NotifierFunction', {
+      entry: path.join(__dirname, "../src/notifyAfterDelete.ts"),
+      handler: "handler",
+      runtime: Runtime.NODEJS_20_X,
+      environment: {
+        DYNAMO_TABLE_NAME: dynamoTable.tableName,
+        TOPIC_ARN: topic.topicArn,
+      
+      },
+    });
+    dynamoTable.grantReadWriteData(notifyAfterDeleteFunction);
+    topic.grantPublish(notifyAfterDeleteFunction);
 
     const sisiApiFunction = new NodejsFunction(this, "GetTableFunction", {
       entry: path.join(__dirname, "../src/postObject.ts"),
@@ -66,6 +79,7 @@ export class ExamStack extends cdk.Stack {
       environment: {
         DYNAMO_TABLE_NAME: dynamoTable.tableName,
         TOPIC_ARN: topic.topicArn,
+        DELETE_LAMBDA_ARN: notifyAfterDeleteFunction.functionArn
       },
     });
 
@@ -74,12 +88,14 @@ export class ExamStack extends cdk.Stack {
       new LambdaIntegration(sisiApiFunction, { proxy: true })
     );
 
-  
-     dynamoTable.grantReadWriteData(sisiApiFunction);
-      topic.grantPublish(sisiApiFunction);
 
-     
+    dynamoTable.grantReadWriteData(sisiApiFunction);
+    topic.grantPublish(sisiApiFunction);
 
-    
+
+   
+
+
+
   }
 }

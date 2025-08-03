@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "3.848.0",
+    "@aws-sdk/client-scheduler": "3.859.0",
     "@aws-sdk/client-sns": "3.848.0",
     "aws-cdk-lib": "2.206.0",
     "aws-sdk": "^2.1692.0",
