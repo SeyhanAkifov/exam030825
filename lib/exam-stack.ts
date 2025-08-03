@@ -27,18 +27,58 @@ export class ExamStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    
+    const senderEmail = 'deine@example.com'; // ← hier später Sisis Adresse eintragen
 
-    const table = new dynamodb.Table(this, 'JsonEventsTable', {
+
+    //Create DynamoDB table witt delete after 30 minutes
+    const dynamoTable = new dynamodb.Table(this, 'Sisi-Table', {
       partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'createdAt', type: dynamodb.AttributeType.NUMBER },
       timeToLiveAttribute: 'ttl',
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
 
+    const topic = new sns.Topic(this, "SisiTopic");
+
+    const sisiSubscription = new Subscription(
+      this,
+      "SisiSubscription",
+      {
+        topic: topic,
+        protocol: sns.SubscriptionProtocol.EMAIL,
+        endpoint: senderEmail,
+      }
+    );
 
 
 
+    const sisiapi = new RestApi(this, "Sisi-Api", {
+      restApiName: "Sisi Service",
+      description: "This service serves sisi orders.",
+    });
+
+    const sisiapiressourse = sisiapi.root.addResource("sisiservices"); 
+
+    const sisiApiFunction = new NodejsFunction(this, "GetTableFunction", {
+      entry: path.join(__dirname, "../src/postObject.ts"),
+      handler: "handler",
+      runtime: Runtime.NODEJS_20_X,
+      environment: {
+        DYNAMO_TABLE_NAME: dynamoTable.tableName,
+        TOPIC_ARN: topic.topicArn,
+      },
+    });
+
+    const sisiapipost = sisiapiressourse.addMethod(
+      "POST",
+      new LambdaIntegration(sisiApiFunction, { proxy: true })
+    );
+
+  
+     dynamoTable.grantReadWriteData(sisiApiFunction);
+      topic.grantPublish(sisiApiFunction);
+
+     
 
     
   }
