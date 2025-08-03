@@ -5,7 +5,7 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { PublishCommand, SNSClient } from "@aws-sdk/client-sns";
 import { APIGatewayProxyEvent } from "aws-lambda";
-import uuid from "uuid"; // Ensure uuid is imported if needed
+import { v4 as uuidv4 } from 'uuid';
 
 const ddb = new DynamoDBClient();
 
@@ -22,7 +22,7 @@ const TOPIC_ARN = process.env.TOPIC_ARN!;
     const body =  JSON.parse(event.body || '{}');
     const { valid, value, description, buyer } = JSON.parse(event.body || '{}');
     const timestamp = Math.floor(Date.now() / 1000);
-    const itemUID = uuid.v4();
+    const itemUID = uuidv4();
 
     if (valid) {
         await snsClient.send(new PublishCommand({
