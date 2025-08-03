@@ -98,12 +98,14 @@ export class ExamStack extends cdk.Stack {
       new LambdaIntegration(sisiApiFunction, { proxy: true })
     );
 
-    schedulerInvokeRole.addToPolicy(new iam.PolicyStatement({
-  actions: ['lambda:InvokeFunction'],
-  resources: [
-    sisiApiFunction.functionArn,
-    notifyAfterDeleteFunction.functionArn
+   sisiApiFunction.addToRolePolicy(new iam.PolicyStatement({
+  actions: [
+    "scheduler:CreateSchedule",
+    "scheduler:DeleteSchedule",
+    "scheduler:UpdateSchedule",
+    "scheduler:GetSchedule",
   ],
+  resources: ["*"], // Du kannst hier auch eine präzisere ARN angeben
 }));
     
 
