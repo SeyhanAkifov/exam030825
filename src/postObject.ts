@@ -14,11 +14,12 @@ export const handler = async (event: APIGatewayProxyEvent) => {
    
     
     
-const TABLE_NAME = process.env.TABLE_NAME!;
+const TABLE_NAME = process.env.DYNAMO_TABLE_NAME;
 const TOPIC_ARN = process.env.TOPIC_ARN!;
 
     const snsClient = new SNSClient({});
-
+const now = Math.floor(Date.now() / 1000);
+const ttl = now + 24 * 60 * 60;
     const body =  JSON.parse(event.body || '{}');
     const { valid, value, description, buyer } = JSON.parse(event.body || '{}');
     const timestamp = Math.floor(Date.now() / 1000);
@@ -28,7 +29,7 @@ const TOPIC_ARN = process.env.TOPIC_ARN!;
         await snsClient.send(new PublishCommand({
         TopicArn: TOPIC_ARN,
         Subject: 'Valid JSON received',
-        Message: JSON.stringify(body, null, 2),
+        Message: JSON.stringify(body),
       }));
         return { statusCode: 200, body: 'Valid JSON sent via email.' };
     } else {
@@ -36,23 +37,26 @@ const TOPIC_ARN = process.env.TOPIC_ARN!;
             TableName: TABLE_NAME,
             Item: {
                 PK: {
-                    S: `ITEM#${itemUID}`
+                    S: `ITEM#${itemUID.toString()}`
                 },
                 SK: {
-                    S: `METADATA#${itemUID}`
+                    S: `METADATA#${itemUID.toString()}`
                 },
                 createdAt:
                 {
                     N: timestamp.toString(),
                 },
-                ttl: {
-                    N: timestamp.toString() + 24 * 3600
+                ttl: { 
+                    N: ttl.toString() 
+                },
+                body:{
+                    S: JSON.stringify(body)
                 },
                 valid: {
-                    B: valid
+                    BOOL : valid
                 },
                 value: {
-                    N: value
+                    N: value.toString()
                 },
                 description: {
                     S: description

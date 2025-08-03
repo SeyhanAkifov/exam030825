@@ -27,13 +27,13 @@ export class ExamStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const senderEmail = 'deine@example.com'; // ← hier später Sisis Adresse eintragen
+    const senderEmail = 'seyhan_akifov@yahoo.com'; // ← hier später Sisis Adresse eintragen
 
 
     //Create DynamoDB table witt delete after 30 minutes
     const dynamoTable = new dynamodb.Table(this, 'Sisi-Table', {
-      partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
-      sortKey: { name: 'createdAt', type: dynamodb.AttributeType.NUMBER },
+      partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
       timeToLiveAttribute: 'ttl',
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
