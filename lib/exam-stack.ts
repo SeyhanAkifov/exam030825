@@ -77,7 +77,6 @@ export class ExamStack extends cdk.Stack {
       assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
     });
 
-    
     notifyAfterDeleteFunction.grantInvoke(schedulerInvokeRole);
 
 
@@ -99,6 +98,14 @@ export class ExamStack extends cdk.Stack {
       new LambdaIntegration(sisiApiFunction, { proxy: true })
     );
 
+    schedulerInvokeRole.addToPolicy(new iam.PolicyStatement({
+  actions: ['lambda:InvokeFunction'],
+  resources: [
+    sisiApiFunction.functionArn,
+    notifyAfterDeleteFunction.functionArn
+  ],
+}));
+    
 
     dynamoTable.grantReadWriteData(sisiApiFunction);
     topic.grantPublish(sisiApiFunction);
